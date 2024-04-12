@@ -262,23 +262,10 @@ impl App {
 
     fn view_footer(&self) -> Html {
         html! {
-          <footer class="text-center fixed-bottom text-muted bg-light py-2">
+          <footer class="text-center fixed-bottom text-muted">
             <div>
-              <span>{format!("LLDAP version {}", env!("CARGO_PKG_VERSION"))}</span>
-            </div>
-            <div>
-              <a href="https://github.com/lldap/lldap" class="me-4 text-reset">
-                <i class="bi-github"></i>
-              </a>
-              <a href="https://discord.gg/h5PEdRMNyP" class="me-4 text-reset">
-                <i class="bi-discord"></i>
-              </a>
-              <a href="https://twitter.com/nitnelave1?ref_src=twsrc%5Etfw" class="me-4 text-reset">
-                <i class="bi-twitter"></i>
-              </a>
-            </div>
-            <div>
-              <span>{"License "}<a href="https://github.com/lldap/lldap/blob/main/LICENSE" class="link-secondary">{"GNU GPL"}</a></span>
+              <span>{format!("Version {} | ", env!("CARGO_PKG_VERSION"))}</span>
+              <span>{"Powered by "}<a href="https://github.com/lldap/lldap" class="link-secondary">{"LLDAP"}</a>{" | License"}<a href="https://github.com/lldap/lldap/blob/main/LICENSE" class="link-secondary">{"GNU GPL"}</a></span>
             </div>
           </footer>
         }

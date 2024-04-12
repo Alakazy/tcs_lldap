@@ -1,5 +1,6 @@
 header h2 {
   font-family: 'Bebas Neue', cursive;
+  color: rgb(245, 141, 26);
 }
 
 .table>tbody {
@@ -29,4 +30,8 @@ html.dark .nav-link {
 
 .nav-link {
   color: #212529
+}
+
+footer div span {
+    font-size: xx-small;
 }
