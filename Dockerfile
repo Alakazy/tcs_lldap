@@ -1,14 +1,14 @@
 # Build image
-FROM rust:alpine3.16 AS chef
+FROM rust:alpine3.19 AS chef
 
 RUN set -x \
     # Add user
-    && addgroup --gid 10001 app \
+    && addgroup --gid 1000 app \
     && adduser --disabled-password \
         --gecos '' \
         --ingroup app \
         --home /app \
-        --uid 10001 \
+        --uid 1000 \
         app \
     # Install required packages
     && apk add openssl-dev musl-dev make perl curl gzip
@@ -18,12 +18,12 @@ WORKDIR /app
 
 RUN set -x \
     # Install build tools
-    && RUSTFLAGS=-Ctarget-feature=-crt-static cargo install wasm-pack cargo-chef \
+    && RUSTFLAGS=-Ctarget-feature=-crt-static cargo install --locked wasm-pack cargo-chef \
     && rustup target add wasm32-unknown-unknown
 
 # Prepare the dependency list.
 FROM chef AS planner
-COPY . .
+COPY --chown=1000:1000 . .
 RUN cargo chef prepare --recipe-path /tmp/recipe.json
 
 # Build dependencies.
@@ -31,12 +31,11 @@ FROM chef AS builder
 COPY --from=planner /tmp/recipe.json recipe.json
 RUN cargo chef cook --release -p lldap_app --target wasm32-unknown-unknown \
     && cargo chef cook --release -p lldap \
-    && cargo chef cook --release -p lldap_migration_tool \
     && cargo chef cook --release -p lldap_set_password
 
 # Copy the source and build the app and server.
-COPY --chown=app:app . .
-RUN cargo build --release -p lldap -p lldap_migration_tool -p lldap_set_password \
+COPY --chown=1000:1000 . .
+RUN cargo build --release -p lldap -p lldap_set_password \
     # Build the frontend.
     && ./app/build.sh
 
@@ -74,11 +73,13 @@ RUN set -eux; \
 
 
 WORKDIR /app
+RUN mkdir /data
+RUN chown 1000:1000 /data
 
 COPY --from=builder /app/app/index_local.html app/index.html
 COPY --from=builder /app/app/static app/static
 COPY --from=builder /app/app/pkg app/pkg
-COPY --from=builder /app/target/release/lldap /app/target/release/lldap_migration_tool /app/target/release/lldap_set_password ./
+COPY --from=builder /app/target/release/lldap /app/target/release/lldap_set_password ./
 COPY docker-entrypoint.sh lldap_config.docker_template.toml ./
 COPY scripts/bootstrap.sh ./
 
