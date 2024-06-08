@@ -94,6 +94,7 @@ pub enum Msg {
 pub struct Props {
     /// The current user details.
     pub user: User,
+    pub is_admin: bool,
 }
 
 impl CommonComponent<UserDetailsForm> for UserDetailsForm {
@@ -207,74 +208,25 @@ impl Component for UserDetailsForm {
               <StaticValue label="UUID" id="uuid">
                 {&self.user.uuid}
               </StaticValue>
-              <Field<UserModel>
-                form={&self.form}
-                required=true
-                label="Email"
-                field_name="email"
-                input_type="email"
-                oninput={link.callback(|_| Msg::Update)} />
+              {if ctx.props().is_admin { html! {
+                  <Field<UserModel>
+                    form={&self.form}
+                    required=true
+                    label="Email"
+                    field_name="email"
+                    input_type="email"
+                    oninput={link.callback(|_| Msg::Update)} />
+              } } else { html! {
+                  <StaticValue label="Email" id="email">
+                    {&self.user.email}
+                  </StaticValue>
+              } } }
               <Field<UserModel>
                 form={&self.form}
                 label="Display name"
                 field_name="display_name"
                 autocomplete="name"
                 oninput={link.callback(|_| Msg::Update)} />
-              <Field<UserModel>
-                form={&self.form}
-                label="First name"
-                field_name="first_name"
-                autocomplete="given-name"
-                oninput={link.callback(|_| Msg::Update)} />
-              <Field<UserModel>
-                form={&self.form}
-                label="Last name"
-                field_name="last_name"
-                autocomplete="family-name"
-                oninput={link.callback(|_| Msg::Update)} />
-              <div class="form-group row align-items-center mb-3">
-                <label for="avatar"
-                  class="form-label col-4 col-form-label">
-                  {"Avatar: "}
-                </label>
-                <div class="col-8">
-                  <div class="row align-items-center">
-                    <div class="col-5">
-                      <input
-                        class="form-control"
-                        id="avatarInput"
-                        type="file"
-                        accept="image/jpeg"
-                        oninput={link.callback(|e: InputEvent| {
-                            let input: HtmlInputElement = e.target_unchecked_into();
-                            Self::upload_files(input.files())
-                        })} />
-                    </div>
-                    <div class="col-3">
-                      <button
-                        class="btn btn-secondary col-auto"
-                        id="avatarClear"
-                        disabled={self.common.is_task_running()}
-                        onclick={link.callback(|e: MouseEvent| {e.prevent_default(); Msg::ClearAvatarClicked})}>
-                      {"Clear"}
-                      </button>
-                    </div>
-                    <div class="col-4">
-                    {
-                      if !avatar_string.is_empty() {
-                        html!{
-                          <img
-                            id="avatarDisplay"
-                            src={format!("data:image/jpeg;base64, {}", avatar_string)}
-                            style="max-height:128px;max-width:128px;height:auto;width:auto;"
-                            alt="Avatar" />
-                        }
-                      } else { html! {} }
-                    }
-                    </div>
-                  </div>
-                </div>
-              </div>
               <Submit
                 text="Save changes"
                 disabled={self.common.is_task_running()}
@@ -329,15 +281,6 @@ impl UserDetailsForm {
         if base_user.display_name != model.display_name {
             user_input.displayName = Some(model.display_name);
         }
-        if base_user.first_name != model.first_name {
-            user_input.firstName = Some(model.first_name);
-        }
-        if base_user.last_name != model.last_name {
-            user_input.lastName = Some(model.last_name);
-        }
-        if let Some(avatar) = &self.avatar {
-            user_input.avatar = Some(to_base64(avatar)?);
-        }
         // Nothing changed.
         if user_input == default_user_input {
             return Ok(false);
@@ -357,11 +300,6 @@ impl UserDetailsForm {
         let model = self.form.model();
         self.user.email = model.email;
         self.user.display_name = model.display_name;
-        self.user.first_name = model.first_name;
-        self.user.last_name = model.last_name;
-        if let Some(avatar) = &self.avatar {
-            self.user.avatar = Some(to_base64(avatar)?);
-        }
         self.just_updated = true;
         Ok(true)
     }
